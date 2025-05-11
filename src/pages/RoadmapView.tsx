@@ -12,6 +12,13 @@ interface BreadcrumbItem {
   path: string;
 }
 
+interface ModuleCache {
+  [key: string]: RoadmapModule[];
+}
+
+// Cache az útitervek tárolásához
+const moduleCache: ModuleCache = {};
+
 function RoadmapView() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -20,34 +27,52 @@ function RoadmapView() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Parse path segments to get topic and module hierarchy
+  // URL szegmensek feldolgozása
   const pathSegments = location.pathname.split('/').filter(Boolean);
   const originalTopic = decodeURIComponent(pathSegments[1] || '');
   const currentModuleTitle = pathSegments.length > 2 
     ? decodeURIComponent(pathSegments[pathSegments.length - 1]).replace(/-/g, ' ')
     : '';
 
-  // Generate breadcrumb items
+  // Breadcrumb elemek generálása
   const breadcrumbItems: BreadcrumbItem[] = [
     { label: 'Főoldal', path: '/' },
-    { label: originalTopic, path: `/roadmap/${encodeURIComponent(originalTopic)}` },
-    ...pathSegments.slice(2).map((segment, index) => ({
-      label: decodeURIComponent(segment).replace(/-/g, ' '),
-      path: `/roadmap/${pathSegments.slice(1, index + 3).join('/')}`
-    }))
+    { label: originalTopic, path: `/roadmap/${encodeURIComponent(originalTopic)}` }
   ];
+
+  // További breadcrumb elemek hozzáadása
+  if (pathSegments.length > 2) {
+    pathSegments.slice(2).forEach((segment, index) => {
+      breadcrumbItems.push({
+        label: decodeURIComponent(segment).replace(/-/g, ' '),
+        path: `/roadmap/${pathSegments.slice(1, index + 3).join('/')}`
+      });
+    });
+  }
 
   useEffect(() => {
     const fetchRoadmap = async () => {
       setIsLoading(true);
       setError(null);
 
+      const cacheKey = `${originalTopic}-${currentModuleTitle || 'main'}`;
+
+      // Ellenőrizzük, hogy van-e cache-elt adat
+      if (moduleCache[cacheKey]) {
+        setModules(moduleCache[cacheKey]);
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const response = await generateRoadmap(
           originalTopic,
           currentModuleTitle || undefined
         );
-        setModules(response.roadmap || []);
+
+        // Cache-eljük az adatokat
+        moduleCache[cacheKey] = response.roadmap;
+        setModules(response.roadmap);
       } catch (err) {
         setError('Hiba történt az útiterv betöltése közben. Kérjük, próbálja újra később.');
       } finally {
@@ -79,7 +104,12 @@ function RoadmapView() {
       ) : error ? (
         <ErrorState 
           message={error} 
-          onRetry={() => navigate(0)} 
+          onRetry={() => {
+            // Cache törlése hiba esetén
+            const cacheKey = `${originalTopic}-${currentModuleTitle || 'main'}`;
+            delete moduleCache[cacheKey];
+            navigate(0);
+          }} 
         />
       ) : (
         <div>
