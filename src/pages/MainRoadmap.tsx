@@ -6,11 +6,11 @@ import TopicForm from '../components/TopicForm';
 import RoadmapGrid from '../components/RoadmapGrid';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
-import { useAuth } from '../context/AuthContext';
+import { useRoadmapHistory } from '../context/RoadmapHistoryContext';
 
 function MainRoadmap() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { addToHistory } = useRoadmapHistory();
   const [topic, setTopic] = useState<string>('');
   const [modules, setModules] = useState<RoadmapModule[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -23,7 +23,13 @@ function MainRoadmap() {
 
     try {
       const response = await generateRoadmap(inputTopic);
-      setModules(response.roadmap || []);
+      setModules(response.roadmap);
+      
+      // Add to history
+      addToHistory({
+        topic: response.topic,
+        modules: response.roadmap
+      });
     } catch (err) {
       setError('Nem sikerült létrehozni az útitervet. Kérjük, próbálja újra később.');
       setModules([]);
@@ -33,10 +39,7 @@ function MainRoadmap() {
   };
 
   const handleModuleClick = (module: RoadmapModule) => {
-    const topicSlug = encodeURIComponent(topic.toLowerCase().replace(/\s+/g, '-'));
-    navigate(`/roadmap/${topicSlug}/${module.id}`, {
-      state: { originalTopic: topic, parentModule: module }
-    });
+    navigate(`/roadmap/${module.topic_id}/${module.id}`);
   };
 
   const handleRetry = () => {
