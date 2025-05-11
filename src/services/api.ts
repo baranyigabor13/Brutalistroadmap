@@ -21,10 +21,22 @@ export const generateRoadmap = async (topic: string, moduleTitle?: string): Prom
           'Accept': 'application/json',
         },
         withCredentials: false,
-        timeout: 10000 // 10 másodperces timeout
+        timeout: 30000 // 30 másodperces timeout
       }
     );
-    return response.data;
+
+    // Ellenőrizzük, hogy van-e valid válasz és roadmap adat
+    if (!response.data || !Array.isArray(response.data.roadmap)) {
+      throw new Error('Érvénytelen válasz érkezett a szervertől');
+    }
+
+    return {
+      roadmap: response.data.roadmap.map((module: any) => ({
+        id: module.id || String(Math.random()),
+        title: module.title || 'Ismeretlen modul',
+        description: module.description || 'Nincs leírás'
+      }))
+    };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.code === 'ECONNABORTED') {
