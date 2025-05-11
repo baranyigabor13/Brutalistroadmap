@@ -16,11 +16,14 @@ export const generateRoadmap = async (topic: string, moduleTitle?: string): Prom
 
     // Először létrehozzuk a topic-ot az adatbázisban
     const newTopic = await createTopic(topic);
+    if (!newTopic) {
+      throw new Error('Nem sikerült létrehozni a témát');
+    }
 
     // Ellenőrizzük, hogy vannak-e már modulok ehhez a topic-hoz
     const existingModules = await getModulesByTopicId(newTopic.id);
-
-    if (existingModules.length > 0) {
+    
+    if (existingModules && existingModules.length > 0) {
       return {
         topic: newTopic,
         roadmap: existingModules
@@ -35,9 +38,14 @@ export const generateRoadmap = async (topic: string, moduleTitle?: string): Prom
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
+        timeout: 30000, // 30 másodperces timeout
         withCredentials: false
       }
     );
+
+    if (!response.data || !response.data.roadmap) {
+      throw new Error('Érvénytelen válasz a szervertől');
+    }
 
     // Mentsük el a generált modulokat az adatbázisba
     const modulesToCreate = response.data.roadmap.map((module: Omit<RoadmapModule, 'id' | 'topic_id'>, index: number) => ({
@@ -47,13 +55,16 @@ export const generateRoadmap = async (topic: string, moduleTitle?: string): Prom
     }));
 
     const savedModules = await createModules(modulesToCreate);
+    if (!savedModules) {
+      throw new Error('Nem sikerült menteni a modulokat');
+    }
 
     return {
       topic: newTopic,
       roadmap: savedModules
     };
   } catch (error) {
-    console.error('Error generating roadmap:', error);
+    console.error('Hiba a roadmap generálása során:', error);
     throw error;
   }
 };
