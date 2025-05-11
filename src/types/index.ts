@@ -16,3 +16,9 @@ export interface Roadmap {
 export interface ApiResponse {
   roadmap: RoadmapModule[];
 }
+
+// Navigation state interface
+export interface RoadmapNavigationState {
+  originalTopic: string;
+  parentModule?: RoadmapModule;
+}
