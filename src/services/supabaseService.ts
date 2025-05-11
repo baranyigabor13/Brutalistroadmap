@@ -2,12 +2,14 @@ import { supabase } from '../utils/supabaseClient';
 import { Topic, RoadmapModule } from '../types';
 
 export const createTopic = async (originalTopicText: string): Promise<Topic> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
   const { data, error } = await supabase
     .from('topics')
     .insert([
       { 
         original_topic_text: originalTopicText,
-        user_id: supabase.auth.getUser().then(({ data }) => data.user?.id)
+        user_id: user?.id
       }
     ])
     .select()
