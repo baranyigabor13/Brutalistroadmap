@@ -31,12 +31,20 @@ export const getTopicById = async (topicId: string): Promise<Topic> => {
 };
 
 export const getModulesByTopicId = async (topicId: string, parentModuleId: string | null = null): Promise<RoadmapModule[]> => {
-  const { data, error } = await supabase
+  const query = supabase
     .from('modules')
     .select('*')
     .eq('topic_id', topicId)
-    .eq('parent_module_id', parentModuleId)
     .order('order_in_parent', { ascending: true });
+
+  // Csak akkor adjuk hozzá a parent_module_id szűrést, ha a parentModuleId nem null
+  if (parentModuleId === null) {
+    query.is('parent_module_id', null);
+  } else {
+    query.eq('parent_module_id', parentModuleId);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
   return data || [];
