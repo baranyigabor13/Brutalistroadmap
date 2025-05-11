@@ -24,10 +24,10 @@ function SubRoadmap() {
 
     const fetchSubRoadmap = async () => {
       try {
-        const response = await generateRoadmap(state.originalTopic, state.parentModule);
+        const response = await generateRoadmap(state.originalTopic, state.parentModule.title);
         setModules(response.roadmap || []);
       } catch (err) {
-        setError('Failed to generate sub-roadmap. Please try again later.');
+        setError('Nem sikerült létrehozni az al-útitervet. Kérjük, próbálja újra később.');
       } finally {
         setIsLoading(false);
       }
@@ -53,7 +53,7 @@ function SubRoadmap() {
                  hover:shadow-none transition-all duration-200"
       >
         <ArrowLeft size={20} />
-        Back to Main Roadmap
+        Vissza a fő útitervhez
       </button>
 
       <h2 className="text-2xl font-bold mb-2 text-center">
