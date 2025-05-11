@@ -67,3 +67,5 @@ function MainRoadmap() {
     </>
   );
 }
+
+export default MainRoadmap
