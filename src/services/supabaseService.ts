@@ -33,7 +33,7 @@ export const getTopicById = async (topicId: string): Promise<Topic> => {
 export const getModulesByTopicId = async (topicId: string, parentModuleId: string | null = null): Promise<RoadmapModule[]> => {
   const query = supabase
     .from('modules')
-    .select('id, topic_id, parent_module_id, title, description, order_in_parent, created_at')
+    .select('*')
     .eq('topic_id', topicId)
     .order('order_in_parent', { ascending: true });
 
@@ -52,7 +52,7 @@ export const getModulesByTopicId = async (topicId: string, parentModuleId: strin
 export const getModuleById = async (moduleId: string): Promise<RoadmapModule> => {
   const { data, error } = await supabase
     .from('modules')
-    .select('id, topic_id, parent_module_id, title, description, order_in_parent, created_at')
+    .select('*')
     .eq('id', moduleId)
     .single();
 
@@ -64,7 +64,7 @@ export const createModules = async (modules: Omit<RoadmapModule, 'id'>[]): Promi
   const { data, error } = await supabase
     .from('modules')
     .insert(modules)
-    .select('id, topic_id, parent_module_id, title, description, order_in_parent, created_at');
+    .select('*');
 
   if (error) throw error;
   return data;
