@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const SignUp: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -27,13 +27,15 @@ const SignUp: React.FC = () => {
     e.preventDefault();
     try {
       await signUp(email, password);
-      navigate('/'); // Sikeres regisztráció után átirányítás a főoldalra
+      navigate('/');
     } catch (err: any) {
       if (err?.message?.includes('rate_limit')) {
         const seconds = parseInt(err.message.match(/\d+/)?.[0] || '60');
         setCountdown(seconds);
         setIsButtonDisabled(true);
         setError(`Biztonsági okokból kérjük várjon ${seconds} másodpercet a következő próbálkozás előtt.`);
+      } else if (err?.message?.includes('user_already_exists') || err?.error?.message?.includes('User already registered')) {
+        setError('Ez az email cím már regisztrálva van. Kérjük jelentkezzen be.');
       } else {
         setError('Regisztrációs hiba történt');
       }
@@ -47,6 +49,13 @@ const SignUp: React.FC = () => {
         {error && (
           <div className="bg-red-100 border-2 border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
+            {error.includes('már regisztrálva') && (
+              <div className="mt-2">
+                <Link to="/signin" className="text-blue-600 hover:text-blue-800 underline">
+                  Bejelentkezés
+                </Link>
+              </div>
+            )}
             {countdown > 0 && (
               <div className="mt-2 font-bold">
                 Következő próbálkozás: {countdown} másodperc múlva
