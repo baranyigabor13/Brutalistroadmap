@@ -1,18 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
 const SignUp: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const [countdown, setCountdown] = useState(0);
   const { signUp } = useAuth();
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    } else {
+      setIsButtonDisabled(false);
+    }
+    return () => clearInterval(timer);
+  }, [countdown]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await signUp(email, password);
-    } catch (err) {
-      setError('Regisztrációs hiba történt');
+    } catch (err: any) {
+      if (err?.message?.includes('rate_limit')) {
+        const seconds = parseInt(err.message.match(/\d+/)?.[0] || '60');
+        setCountdown(seconds);
+        setIsButtonDisabled(true);
+        setError(`Biztonsági okokból kérjük várjon ${seconds} másodpercet a következő próbálkozás előtt.`);
+      } else {
+        setError('Regisztrációs hiba történt');
+      }
     }
   };
 
@@ -23,6 +44,11 @@ const SignUp: React.FC = () => {
         {error && (
           <div className="bg-red-100 border-2 border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
+            {countdown > 0 && (
+              <div className="mt-2 font-bold">
+                Következő próbálkozás: {countdown} másodperc múlva
+              </div>
+            )}
           </div>
         )}
         <form onSubmit={handleSubmit}>
@@ -54,12 +80,15 @@ const SignUp: React.FC = () => {
           </div>
           <button
             type="submit"
-            className="w-full bg-yellow-400 border-4 border-black px-6 py-2 font-bold 
-                     shadow-[4px_4px_0px_0px_rgba(0,0,0)]
-                     hover:translate-y-1 hover:translate-x-1 hover:shadow-none
-                     transition-all duration-200"
+            disabled={isButtonDisabled}
+            className={`w-full border-4 border-black px-6 py-2 font-bold 
+                     transition-all duration-200
+                     ${isButtonDisabled 
+                       ? 'bg-gray-300 cursor-not-allowed' 
+                       : 'bg-yellow-400 shadow-[4px_4px_0px_0px_rgba(0,0,0)] hover:translate-y-1 hover:translate-x-1 hover:shadow-none'
+                     }`}
           >
-            Regisztráció
+            {isButtonDisabled ? `Várjon (${countdown}s)` : 'Regisztráció'}
           </button>
         </form>
       </div>
