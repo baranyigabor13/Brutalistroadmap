@@ -1,31 +1,34 @@
 import axios from 'axios';
 import { ApiResponse } from '../types';
-import { createTopic, createModules, getModulesByTopicId } from './supabaseService';
+import { supabase } from '../utils/supabaseClient';
 
 // The webhook URL for the n8n workflow
 const N8N_WEBHOOK_URL = 'https://n8n-1-nasm.onrender.com/webhook-test/road';
 
-export const generateRoadmap = async (topicText: string, moduleId?: string): Promise<ApiResponse> => {
+export const generateRoadmap = async (topic: string, moduleTitle?: string): Promise<ApiResponse> => {
   try {
-    // Ha van moduleId, először próbáljuk meg betölteni a meglévő almodulokat
-    if (moduleId) {
-      const existingModules = await getModulesByTopicId(moduleId);
-      if (existingModules.length > 0) {
-        return {
-          topic: await getTopicById(existingModules[0].topic_id),
-          roadmap: existingModules
-        };
-      }
+    const payload = moduleTitle 
+      ? { 
+          topic,
+          title_to_expand: moduleTitle
+        }
+      : { topic };
+
+    // Először próbáljuk meg lekérni a meglévő modulokat
+    const { data: existingModules, error } = await supabase
+      .from('modules')
+      .select('id, title, description, topic_id, parent_module_id, order_in_parent')
+      .order('order_in_parent', { ascending: true });
+
+    if (error) {
+      throw error;
     }
 
-    // Ha nincs moduleId vagy nincsenek meglévő modulok, generáljunk újakat
-    const payload = moduleId 
-      ? { 
-          topic: topicText,
-          parent_module_id: moduleId
-        }
-      : { topic: topicText };
+    if (existingModules && existingModules.length > 0) {
+      return { roadmap: existingModules };
+    }
 
+    // Ha nincsenek meglévő modulok, generáljunk újakat az n8n webhook-kal
     const response = await axios.post(N8N_WEBHOOK_URL, 
       payload,
       {
@@ -36,22 +39,7 @@ export const generateRoadmap = async (topicText: string, moduleId?: string): Pro
         withCredentials: false
       }
     );
-
-    // Mentsük az adatokat Supabase-be
-    const topic = await createTopic(topicText);
-    const modules = await createModules(
-      response.data.roadmap.map((module: any, index: number) => ({
-        ...module,
-        topic_id: topic.id,
-        parent_module_id: moduleId || null,
-        order_in_parent: index
-      }))
-    );
-
-    return {
-      topic,
-      roadmap: modules
-    };
+    return response.data;
   } catch (error) {
     console.error('Error generating roadmap:', error);
     throw error;
