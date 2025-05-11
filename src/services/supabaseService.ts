@@ -33,11 +33,10 @@ export const getTopicById = async (topicId: string): Promise<Topic> => {
 export const getModulesByTopicId = async (topicId: string, parentModuleId: string | null = null): Promise<RoadmapModule[]> => {
   const query = supabase
     .from('modules')
-    .select('*')
+    .select('id, topic_id, parent_module_id, title, description, order_in_parent, created_at')
     .eq('topic_id', topicId)
     .order('order_in_parent', { ascending: true });
 
-  // Csak akkor adjuk hozzá a parent_module_id szűrést, ha a parentModuleId nem null
   if (parentModuleId === null) {
     query.is('parent_module_id', null);
   } else {
@@ -53,7 +52,7 @@ export const getModulesByTopicId = async (topicId: string, parentModuleId: strin
 export const getModuleById = async (moduleId: string): Promise<RoadmapModule> => {
   const { data, error } = await supabase
     .from('modules')
-    .select('*')
+    .select('id, topic_id, parent_module_id, title, description, order_in_parent, created_at')
     .eq('id', moduleId)
     .single();
 
@@ -65,7 +64,7 @@ export const createModules = async (modules: Omit<RoadmapModule, 'id'>[]): Promi
   const { data, error } = await supabase
     .from('modules')
     .insert(modules)
-    .select();
+    .select('id, topic_id, parent_module_id, title, description, order_in_parent, created_at');
 
   if (error) throw error;
   return data;
