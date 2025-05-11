@@ -23,7 +23,7 @@ function MainRoadmap() {
       const response = await generateRoadmap(inputTopic);
       setModules(response.roadmap || []);
     } catch (err) {
-      setError('Failed to generate roadmap. Please try again later.');
+      setError('Nem sikerült létrehozni az útitervet. Kérjük, próbálja újra később.');
       setModules([]);
     } finally {
       setIsLoading(false);
@@ -32,9 +32,8 @@ function MainRoadmap() {
 
   const handleModuleClick = (module: RoadmapModule) => {
     const topicSlug = encodeURIComponent(topic.toLowerCase().replace(/\s+/g, '-'));
-    navigate(`/roadmap/${topicSlug}/${module.id}`, {
-      state: { originalTopic: topic, parentModule: module }
-    });
+    const moduleSlug = encodeURIComponent(module.title.toLowerCase().replace(/\s+/g, '-'));
+    navigate(`/roadmap/${topicSlug}/${moduleSlug}`);
   };
 
   const handleRetry = () => {
@@ -54,19 +53,17 @@ function MainRoadmap() {
       ) : modules.length > 0 ? (
         <div>
           <h2 className="text-2xl font-bold mb-6 text-center">
-            Your Learning Roadmap for <span className="bg-yellow-400 px-2">{topic}</span>
+            Útiterv ehhez: <span className="bg-yellow-400 px-2">{topic}</span>
           </h2>
           <RoadmapGrid modules={modules} onModuleClick={handleModuleClick} />
         </div>
       ) : (
         <div className="text-center my-16">
           <div className="inline-block border-4 border-black bg-blue-400 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0)]">
-            <p className="text-xl">Enter a topic above to generate your learning roadmap</p>
+            <p className="text-xl">Írjon be egy témát fent az útiterv generálásához</p>
           </div>
         </div>
       )}
     </>
   );
 }
-
-export default MainRoadmap;
