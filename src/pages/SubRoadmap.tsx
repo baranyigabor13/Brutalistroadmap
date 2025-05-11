@@ -1,73 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { RoadmapModule } from '../types';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { RoadmapModule, RoadmapNavigationState } from '../types';
 import { generateRoadmap } from '../services/api';
-import { getModuleById, getModulesByTopicId } from '../services/supabaseService';
 import RoadmapGrid from '../components/RoadmapGrid';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
 import { ArrowLeft } from 'lucide-react';
-import { useRoadmapHistory } from '../context/RoadmapHistoryContext';
 
 function SubRoadmap() {
-  const { moduleId, topic: topicId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
-  const { goBack, addToHistory } = useRoadmapHistory();
+  const state = location.state as RoadmapNavigationState;
   
-  const [currentModule, setCurrentModule] = useState<RoadmapModule | null>(null);
   const [modules, setModules] = useState<RoadmapModule[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadData = async () => {
-      if (!moduleId || !topicId) {
-        navigate('/');
-        return;
-      }
+    if (!state?.originalTopic || !state?.parentModule) {
+      navigate('/');
+      return;
+    }
 
+    const fetchSubRoadmap = async () => {
       try {
-        // Lekérjük az aktuális modult
-        const module = await getModuleById(moduleId);
-        setCurrentModule(module);
-
-        // Lekérjük a gyerek modulokat
-        const subModules = await getModulesByTopicId(topicId, moduleId);
-
-        if (subModules.length === 0) {
-          // Ha nincsenek gyerek modulok, generáljunk újakat
-          const response = await generateRoadmap(module.title, module.description);
-          setModules(response.roadmap);
-          
-          // Add to history
-          addToHistory({
-            topic: response.topic,
-            modules: response.roadmap,
-            parentModuleId: moduleId
-          });
-        } else {
-          setModules(subModules);
-        }
+        const response = await generateRoadmap(state.originalTopic, state.parentModule.title);
+        setModules(response.roadmap || []);
       } catch (err) {
-        setError('Nem sikerült betölteni az al-útitervet. Kérjük, próbálja újra később.');
+        setError('Nem sikerült létrehozni az al-útitervet. Kérjük, próbálja újra később.');
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadData();
-  }, [moduleId, topicId, navigate, addToHistory]);
+    fetchSubRoadmap();
+  }, [state, navigate]);
 
   const handleBack = () => {
-    const previousState = goBack();
-    if (previousState) {
-      navigate(-1);
-    } else {
-      navigate('/');
-    }
+    navigate(-1);
   };
 
-  if (!currentModule) {
+  if (!state?.parentModule) {
     return null;
   }
 
@@ -84,10 +57,10 @@ function SubRoadmap() {
       </button>
 
       <h2 className="text-2xl font-bold mb-2 text-center">
-        <span className="bg-yellow-400 px-2">{currentModule.title}</span>
+        <span className="bg-yellow-400 px-2">{state.parentModule.title}</span>
       </h2>
       <p className="text-center mb-8 max-w-2xl mx-auto">
-        {currentModule.description}
+        {state.parentModule.description}
       </p>
 
       {isLoading ? (
