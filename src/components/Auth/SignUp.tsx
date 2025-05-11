@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const SignUp: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -8,6 +9,7 @@ const SignUp: React.FC = () => {
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const { signUp } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -25,6 +27,7 @@ const SignUp: React.FC = () => {
     e.preventDefault();
     try {
       await signUp(email, password);
+      navigate('/'); // Sikeres regisztráció után átirányítás a főoldalra
     } catch (err: any) {
       if (err?.message?.includes('rate_limit')) {
         const seconds = parseInt(err.message.match(/\d+/)?.[0] || '60');
