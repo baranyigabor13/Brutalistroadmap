@@ -16,18 +16,7 @@ function MainRoadmap() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/signin');
-    }
-  }, [user, authLoading, navigate]);
-
   const handleGenerateRoadmap = async (inputTopic: string) => {
-    if (!user) {
-      navigate('/signin');
-      return;
-    }
-
     setTopic(inputTopic);
     setIsLoading(true);
     setError(null);
@@ -61,6 +50,7 @@ function MainRoadmap() {
   }
 
   if (!user) {
+    navigate('/signin');
     return null;
   }
 

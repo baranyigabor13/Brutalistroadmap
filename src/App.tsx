@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import MainRoadmap from './pages/MainRoadmap';
 import SubRoadmap from './pages/SubRoadmap';
 import Header from './components/Header';
@@ -21,6 +21,7 @@ function App() {
               <Route path="/roadmap/:topic/:moduleId" element={<SubRoadmap />} />
               <Route path="/signin" element={<SignIn />} />
               <Route path="/signup" element={<SignUp />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
 
