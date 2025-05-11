@@ -7,6 +7,7 @@ import Footer from './components/Footer';
 import SignIn from './components/Auth/SignIn';
 import SignUp from './components/Auth/SignUp';
 import { AuthProvider } from './context/AuthContext';
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (
@@ -17,10 +18,24 @@ function App() {
           
           <main className="flex-1 px-4">
             <Routes>
-              <Route path="/" element={<MainRoadmap />} />
-              <Route path="/roadmap/:topic/:moduleId" element={<SubRoadmap />} />
               <Route path="/signin" element={<SignIn />} />
               <Route path="/signup" element={<SignUp />} />
+              <Route 
+                path="/" 
+                element={
+                  <PrivateRoute>
+                    <MainRoadmap />
+                  </PrivateRoute>
+                } 
+              />
+              <Route 
+                path="/roadmap/:topic/:moduleId" 
+                element={
+                  <PrivateRoute>
+                    <SubRoadmap />
+                  </PrivateRoute>
+                } 
+              />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

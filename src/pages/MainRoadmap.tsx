@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RoadmapModule } from '../types';
 import { generateRoadmap } from '../services/api';
@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 
 function MainRoadmap() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const [topic, setTopic] = useState<string>('');
   const [modules, setModules] = useState<RoadmapModule[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -44,15 +44,6 @@ function MainRoadmap() {
       handleGenerateRoadmap(topic);
     }
   };
-
-  if (authLoading) {
-    return <LoadingState />;
-  }
-
-  if (!user) {
-    navigate('/signin');
-    return null;
-  }
 
   return (
     <>
