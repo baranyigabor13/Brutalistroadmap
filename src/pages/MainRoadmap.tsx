@@ -7,9 +7,11 @@ import RoadmapGrid from '../components/RoadmapGrid';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
 import { useRoadmapHistory } from '../context/RoadmapHistoryContext';
+import { useAuth } from '../context/AuthContext';
 
 function MainRoadmap() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { addToHistory } = useRoadmapHistory();
   const [topic, setTopic] = useState<string>('');
   const [modules, setModules] = useState<RoadmapModule[]>([]);
@@ -17,6 +19,11 @@ function MainRoadmap() {
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerateRoadmap = async (inputTopic: string) => {
+    if (!user) {
+      navigate('/signin');
+      return;
+    }
+
     setTopic(inputTopic);
     setIsLoading(true);
     setError(null);
@@ -30,8 +37,9 @@ function MainRoadmap() {
         topic: response.topic,
         modules: response.roadmap
       });
-    } catch (err) {
-      setError('Nem sikerült létrehozni az útitervet. Kérjük, próbálja újra később.');
+    } catch (err: any) {
+      console.error('Hiba:', err);
+      setError(err?.message || 'Nem sikerült létrehozni az útitervet. Kérjük, próbálja újra később.');
       setModules([]);
     } finally {
       setIsLoading(false);
