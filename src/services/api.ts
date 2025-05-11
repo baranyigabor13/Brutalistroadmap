@@ -20,33 +20,14 @@ export const generateRoadmap = async (topic: string, moduleTitle?: string): Prom
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        withCredentials: false,
-        timeout: 30000 // 30 másodperces timeout
+        withCredentials: false
       }
     );
-
-    // Ellenőrizzük, hogy van-e valid válasz és roadmap adat
-    if (!response.data || !Array.isArray(response.data.roadmap)) {
-      throw new Error('Érvénytelen válasz érkezett a szervertől');
-    }
-
-    return {
-      roadmap: response.data.roadmap.map((module: any) => ({
-        id: module.id || String(Math.random()),
-        title: module.title || 'Ismeretlen modul',
-        description: module.description || 'Nincs leírás'
-      }))
-    };
+    return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.code === 'ECONNABORTED') {
-        throw new Error('A szerver nem válaszol. Kérjük, próbálja újra később.');
-      }
-      if (!error.response) {
-        throw new Error('A szerver jelenleg nem elérhető. Kérjük, próbálja újra később.');
-      }
-      throw new Error(`Hiba történt: ${error.response.status} - ${error.response.statusText}`);
-    }
-    throw new Error('Váratlan hiba történt a roadmap generálása közben.');
+    console.error('Error generating roadmap:', error);
+    return {
+      roadmap: []
+    };
   }
 };
